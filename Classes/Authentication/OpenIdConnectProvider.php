@@ -247,9 +247,16 @@ final class OpenIdConnectProvider extends AbstractProvider
             $this->logger->warning(sprintf('OpenID Connect: The identity token (%s) contain no "aud" value', $identityToken->values['sub'] ?? '?'), LogEnvironment::fromMethodName(__METHOD__));
             return false;
         }
-        if ($expectedAudience !== $identityToken->values['aud']) {
-            $this->logger->warning(sprintf('OpenID Connect: The identity token (%s) was intended for audience "%s" but this authentication provider is configured as audience "%s"', $identityToken->values['sub'], $identityToken->values['aud'], $expectedAudience), LogEnvironment::fromMethodName(__METHOD__));
-            return false;
+        if (is_array($identityToken->values['aud'])) {
+            if (!in_array($expectedAudience, $identityToken->values['aud'])) {
+                $this->logger->warning(sprintf('OpenID Connect: The identity token (%s) was intended for audience "%s" but this authentication provider is configured as audience "%s"', $identityToken->values['sub'], json_encode($identityToken->values['aud']), $expectedAudience), LogEnvironment::fromMethodName(__METHOD__));
+                return false;
+            }
+        } else {
+            if ($expectedAudience !== $identityToken->values['aud']) {
+                $this->logger->warning(sprintf('OpenID Connect: The identity token (%s) was intended for audience "%s" but this authentication provider is configured as audience "%s"', $identityToken->values['sub'], $identityToken->values['aud'], $expectedAudience), LogEnvironment::fromMethodName(__METHOD__));
+                return false;
+            }
         }
         return true;
     }
